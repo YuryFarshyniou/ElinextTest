@@ -2,6 +2,7 @@ package com.elinext.configurator.impl;
 
 import com.elinext.annotation.Inject;
 import com.elinext.configurator.Configurator;
+import com.elinext.exceptions.BindingNotFoundException;
 import com.elinext.exceptions.ConstructorNotFoundException;
 import com.elinext.exceptions.TooManyConstructorsException;
 import com.elinext.scanner.Scanner;
@@ -13,7 +14,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 public class InjectAnnotationConfigurator implements Configurator {
-    private final Scanner scanner;
+    private Scanner scanner;
     private int countForConstructorsWithInject;
     private Object instance;
     boolean isAnnotationInjectIsPresent;
@@ -21,11 +22,11 @@ public class InjectAnnotationConfigurator implements Configurator {
 
     public InjectAnnotationConfigurator() {
         countForConstructorsWithInject = 0;
-        scanner = new ScannerImpl();
     }
 
     @Override
     public Object config(Class classForInject) {
+        countForConstructorsWithInject = 0;
         Constructor[] constructors = classForInject.getConstructors();
         actionIfAnnotationInjectIsPresent(constructors);
         if (!isAnnotationInjectIsPresent) {
@@ -42,6 +43,7 @@ public class InjectAnnotationConfigurator implements Configurator {
             if (constructor.isAnnotationPresent(Inject.class)) {
                 throwExceptionIfConstWithInjectMoreThanOne();
                 List<Class> classes = getClassesFromScanner(constructor);
+
                 Object[] values = getArrayForConstructor(classes);
                 instance = createObject(constructor, values);
                 isAnnotationInjectIsPresent = true;
@@ -56,11 +58,16 @@ public class InjectAnnotationConfigurator implements Configurator {
     }
 
     private List<Class> getClassesFromScanner(Constructor constructor) {
+        this.scanner = new ScannerImpl();
         Class[] parameterTypes = constructor.getParameterTypes();
         for (Class parameterType : parameterTypes) {
             scanner.scan("com.elinext", parameterType);
         }
-        return scanner.getClasses();
+        List<Class> classes = scanner.getClasses();
+        if (classes.size() != parameterTypes.length) {
+            throw new BindingNotFoundException("Problem with binding!");
+        }
+        return classes;
     }
 
     private Object[] getArrayForConstructor(List<Class> classes) {
@@ -108,10 +115,15 @@ public class InjectAnnotationConfigurator implements Configurator {
     }
 
     private List<Class> getListOfFields(Field[] fields) {
+        this.scanner = new ScannerImpl();
         for (Field declaredField : fields) {
             scanner.scan("com.elinext", declaredField.getType());
         }
-        return scanner.getClasses();
+        List<Class> classes = scanner.getClasses();
+        if (classes.size() != fields.length) {
+            throw new BindingNotFoundException("Problem with binding!");
+        }
+        return classes;
     }
 
     private void setFields(Field[] declaredFields, List<Class> classes) {

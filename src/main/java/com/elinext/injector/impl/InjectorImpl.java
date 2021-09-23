@@ -7,14 +7,15 @@ import com.elinext.injector.Injector;
 import com.elinext.provider.Provider;
 import com.elinext.provider.impl.ProviderImpl;
 
+import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 
 public class InjectorImpl implements Injector {
-    private final Map<Class, Class> bindingInstance;
-    private final Map<Class, Class> singletonInstances;
-    private final Map<Class, Object> cache;
+    private final Map<String, Class> bindingInstance;
+    private final Map<String, Class> singletonInstances;
+    private final Map<String, Object> cache;
     private final Configurator configurator;
 
     public InjectorImpl() {
@@ -27,20 +28,16 @@ public class InjectorImpl implements Injector {
     @Override
     public <T> Provider<T> getProvider(Class<T> type) {
         Provider<T> classProvider;
-        if (singletonInstances.containsKey(type)) {
-            if (cache.containsKey(type)) {
-                classProvider = new ProviderImpl<>((T) cache.get(type));
+        if (singletonInstances.containsKey(type.getName())) {
+            if (cache.containsKey(type.getName())) {
+                classProvider = new ProviderImpl<>((T) cache.get(type.getName()));
                 return classProvider;
             }
-            T instance = (T) configurator.config(type);
-            cache.put(type, instance);
-            classProvider = new ProviderImpl<>(instance);
+            classProvider = setSingletonBinding(type);
             return classProvider;
 
-        } else if (bindingInstance.containsKey(type)) {
-            Class aClass = bindingInstance.get(type);
-            T instance = (T) configurator.config(aClass);
-            classProvider = new ProviderImpl<>(instance);
+        } else if (bindingInstance.containsKey(type.getName())) {
+            classProvider = setBinding(type);
             return classProvider;
         }
         classProvider = new ProviderImpl<>(null);
@@ -49,19 +46,37 @@ public class InjectorImpl implements Injector {
 
     @Override
     public <T> void bind(Class<T> intf, Class<? extends T> impl) {
-        Class<?>[] interfaces = impl.getInterfaces();
-        if (interfaces.length == 0 || intf != interfaces[0]) {
-            throw new BindingNotFoundException();
-        }
-        bindingInstance.put(intf, impl);
+        checkIfBindingSuccess(intf, impl);
+        bindingInstance.put(intf.getName(), impl);
     }
 
     @Override
     public <T> void bindSingleton(Class<T> intf, Class<? extends T> impl) {
+        checkIfBindingSuccess(intf, impl);
+        singletonInstances.put(intf.getName(), impl);
+    }
+
+    private <T> Provider setSingletonBinding(Class type) {
+        Class aClass = singletonInstances.get(type.getName());
+//        Proxy.newProxyInstance()
+//        T instance = (T)
+        configurator.config(aClass);
+//        cache.put(type.getName(), instance);
+//        return new ProviderImpl<>(instance);
+        return null;
+    }
+
+
+    private <T> Provider setBinding(Class type) {
+        Class aClass = bindingInstance.get(type.getName());
+        T instance = (T) configurator.config(aClass);
+        return new ProviderImpl<>(instance);
+    }
+
+    private <T> void checkIfBindingSuccess(Class<T> intf, Class<? extends T> impl) {
         Class<?>[] interfaces = impl.getInterfaces();
         if (interfaces.length == 0 || intf != interfaces[0]) {
             throw new BindingNotFoundException();
         }
-        singletonInstances.put(intf, impl);
     }
 }

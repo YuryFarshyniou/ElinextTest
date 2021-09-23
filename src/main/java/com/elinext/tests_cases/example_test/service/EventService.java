@@ -1,4 +1,4 @@
-package com.elinext.test.service;
+package com.elinext.tests_cases.example_test.service;
 
 public interface EventService {
     void someServiceThings();

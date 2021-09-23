@@ -1,6 +1,6 @@
-package com.elinext.test.dao.impl;
+package com.elinext.tests_cases.example_test.dao.impl;
 
-import com.elinext.test.dao.EventDAO;
+import com.elinext.tests_cases.example_test.dao.EventDAO;
 
 public class InMemoryEventDaoImpl implements EventDAO {
     @Override

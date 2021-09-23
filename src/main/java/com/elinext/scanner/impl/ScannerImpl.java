@@ -7,19 +7,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class ScannerImpl implements Scanner {
     private List<Class> classes;
 
     public ScannerImpl() {
-        classes = new ArrayList<>();
+        this.classes = new ArrayList<>();
     }
 
     @Override
-    public void scan(String packageName, Class classForScan) {
+    public void scan(String packageName, Class classForScan)  {
         InputStream stream = ClassLoader.getSystemClassLoader()
                 .getResourceAsStream(packageName.replaceAll("[.]", "/"));
         BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
@@ -55,6 +53,4 @@ public class ScannerImpl implements Scanner {
         }
         return null;
     }
-
-
 }
