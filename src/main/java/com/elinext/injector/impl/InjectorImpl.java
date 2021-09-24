@@ -7,9 +7,9 @@ import com.elinext.injector.Injector;
 import com.elinext.provider.Provider;
 import com.elinext.provider.impl.ProviderImpl;
 
-import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 
 public class InjectorImpl implements Injector {
@@ -17,17 +17,20 @@ public class InjectorImpl implements Injector {
     private final Map<String, Class> singletonInstances;
     private final Map<String, Object> cache;
     private final Configurator configurator;
+    private final ReentrantLock lock;
 
     public InjectorImpl() {
         this.configurator = new InjectAnnotationConfigurator();
         this.bindingInstance = new ConcurrentHashMap<>();
         this.singletonInstances = new ConcurrentHashMap<>();
         this.cache = new ConcurrentHashMap<>();
+        this.lock = new ReentrantLock();
     }
 
     @Override
     public <T> Provider<T> getProvider(Class<T> type) {
         Provider<T> classProvider;
+        lock.lock();
         if (singletonInstances.containsKey(type.getName())) {
             if (cache.containsKey(type.getName())) {
                 classProvider = new ProviderImpl<>((T) cache.get(type.getName()));
@@ -41,6 +44,7 @@ public class InjectorImpl implements Injector {
             return classProvider;
         }
         classProvider = new ProviderImpl<>(null);
+        lock.unlock();
         return classProvider;
     }
 
@@ -58,12 +62,10 @@ public class InjectorImpl implements Injector {
 
     private <T> Provider setSingletonBinding(Class type) {
         Class aClass = singletonInstances.get(type.getName());
-//        Proxy.newProxyInstance()
-//        T instance = (T)
-        configurator.config(aClass);
-//        cache.put(type.getName(), instance);
-//        return new ProviderImpl<>(instance);
-        return null;
+
+        T instance = (T) configurator.config(aClass);
+        cache.put(type.getName(), instance);
+        return new ProviderImpl<>(instance);
     }
 
 

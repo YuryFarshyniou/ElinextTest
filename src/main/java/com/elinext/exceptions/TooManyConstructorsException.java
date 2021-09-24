@@ -1,6 +1,6 @@
 package com.elinext.exceptions;
 
-public class TooManyConstructorsException extends RuntimeException{
+public class TooManyConstructorsException extends RuntimeException {
     public TooManyConstructorsException() {
     }
 

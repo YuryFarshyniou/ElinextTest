@@ -9,7 +9,6 @@ public class EventServiceImpl implements EventService {
 
     @Inject
     public EventServiceImpl(EventDAO eventDAO) {
-        System.out.println("Created!");
         this.eventDAO = eventDAO;
     }
 

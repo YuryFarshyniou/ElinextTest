@@ -86,7 +86,7 @@ public class InjectorTest {
 
         Provider<EventService> provider2 = injector.getProvider(EventService.class);
         EventService eventService2 = provider2.getInstance();
-        assertNotSame(eventService,eventService2);
+        assertNotSame(eventService, eventService2);
     }
 
     @Test
@@ -98,8 +98,7 @@ public class InjectorTest {
 
         Provider<EventService> provider2 = injector.getProvider(EventService.class);
         EventService eventService2 = provider2.getInstance();
-        assertSame(eventService,eventService2);
+        assertSame(eventService, eventService2);
     }
-
 
 }

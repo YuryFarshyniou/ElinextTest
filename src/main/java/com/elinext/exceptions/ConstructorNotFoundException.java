@@ -1,6 +1,6 @@
 package com.elinext.exceptions;
 
-public class ConstructorNotFoundException extends RuntimeException{
+public class ConstructorNotFoundException extends RuntimeException {
     public ConstructorNotFoundException() {
     }
 

@@ -11,9 +11,8 @@ public class Runner {
         Injector i = new InjectorImpl();
         i.bindSingleton(EventService.class, EventServiceImpl.class);
         Provider<EventService> serviceProvider = i.getProvider(EventService.class);
-//        EventService instance = serviceProvider.getInstance();
-//        instance.someServiceThings();
-
+        EventService instance = serviceProvider.getInstance();
+        instance.someServiceThings();
 
     }
 }

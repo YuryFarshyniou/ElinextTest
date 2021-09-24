@@ -17,7 +17,7 @@ public class ScannerImpl implements Scanner {
     }
 
     @Override
-    public void scan(String packageName, Class classForScan)  {
+    public void scan(String packageName, Class classForScan) {
         InputStream stream = ClassLoader.getSystemClassLoader()
                 .getResourceAsStream(packageName.replaceAll("[.]", "/"));
         BufferedReader reader = new BufferedReader(new InputStreamReader(stream));

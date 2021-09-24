@@ -11,7 +11,10 @@ import com.elinext.scanner.impl.ScannerImpl;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Proxy;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 public class InjectAnnotationConfigurator implements Configurator {
     private Scanner scanner;
@@ -28,7 +31,7 @@ public class InjectAnnotationConfigurator implements Configurator {
     public Object config(Class classForInject) {
         countForConstructorsWithInject = 0;
         Constructor[] constructors = classForInject.getConstructors();
-        actionIfAnnotationInjectIsPresent(constructors);
+        actionIfAnnotationInjectIsPresent(constructors, classForInject);
         if (!isAnnotationInjectIsPresent) {
             actionIfThereIsOnlyDefaultConstructor(classForInject, constructors);
         }
@@ -38,14 +41,13 @@ public class InjectAnnotationConfigurator implements Configurator {
         return instance;
     }
 
-    private void actionIfAnnotationInjectIsPresent(Constructor[] constructors) {
+    private void actionIfAnnotationInjectIsPresent(Constructor[] constructors, Class instance) {
         for (Constructor constructor : constructors) {
             if (constructor.isAnnotationPresent(Inject.class)) {
                 throwExceptionIfConstWithInjectMoreThanOne();
                 List<Class> classes = getClassesFromScanner(constructor);
-
                 Object[] values = getArrayForConstructor(classes);
-                instance = createObject(constructor, values);
+                this.instance = createObject(constructor, values, instance);
                 isAnnotationInjectIsPresent = true;
             }
         }
@@ -84,10 +86,21 @@ public class InjectAnnotationConfigurator implements Configurator {
         return values;
     }
 
-    private Object createObject(Constructor constructor, Object[] values) {
+    private Object createObject(Constructor constructor, Object[] values, Class instance) {
         Object object = new Object();
         try {
-            object = constructor.newInstance(values);
+            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+            Optional<StackTraceElement> setSingletonBinding = Arrays.stream(stackTrace)
+                    .filter(stackTraceElement -> stackTraceElement.getMethodName().equals("setSingletonBinding"))
+                    .findFirst();
+            if (setSingletonBinding.isPresent()) {
+                object = Proxy.newProxyInstance(instance.getClassLoader(), instance.getInterfaces(), (proxy, method, args) -> {
+                    Object o = constructor.newInstance(values);
+                    return method.invoke(o);
+                });
+            } else {
+                object = constructor.newInstance(values);
+            }
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             System.err.println("Something wrong in createObject method!" + e);
         }
