@@ -89,11 +89,8 @@ public class InjectAnnotationConfigurator implements Configurator {
     private Object createObject(Constructor constructor, Object[] values, Class instance) {
         Object object = new Object();
         try {
-            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-            Optional<StackTraceElement> setSingletonBinding = Arrays.stream(stackTrace)
-                    .filter(stackTraceElement -> stackTraceElement.getMethodName().equals("setSingletonBinding"))
-                    .findFirst();
-            if (setSingletonBinding.isPresent()) {
+            Optional<StackTraceElement> setSingletonBindingIsPresent = getOptionalWithMethod();
+            if (setSingletonBindingIsPresent.isPresent()) {
                 object = Proxy.newProxyInstance(instance.getClassLoader(), instance.getInterfaces(), (proxy, method, args) -> {
                     Object o = constructor.newInstance(values);
                     return method.invoke(o);
@@ -105,6 +102,13 @@ public class InjectAnnotationConfigurator implements Configurator {
             System.err.println("Something wrong in createObject method!" + e);
         }
         return object;
+    }
+
+    private Optional<StackTraceElement> getOptionalWithMethod() {
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        return Arrays.stream(stackTrace)
+                .filter(stackTraceElement -> stackTraceElement.getMethodName().equals("setSingletonBinding"))
+                .findFirst();
     }
 
 
